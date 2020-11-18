@@ -20,39 +20,51 @@ Register = {
 registers_name = ["EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"]
 
 class Emulator():
+    def __init__(self):
+        self.elfags = None
+        self.memory = None
+        self.size = None
+        self.eip = None
+        self.registers = None
+        self.instructions = None
 
     def create_emu(self, size, eip, esp):
 
         self.size = size
+        self.memory = [0x00 for _ in range(self.size)]
 
         self.registers = {
-            "EAX": 0,
-            "ECX": 0,
-            "EDX": 0,
-            "EBX": 0,
-            "ESP": 0,
-            "EBP": 0,
-            "ESI": 0,
-            "EDI": 0,
+            "EAX": 0x00,
+            "ECX": 0x00,
+            "EDX": 0x00,
+            "EBX": 0x00,
+            "ESP": 0x00,
+            "EBP": 0x00,
+            "ESI": 0x00,
+            "EDI": 0x00,
         }
 
         self.eip = eip
         self.registers["ESP"] = esp
 
-        self.eflags = 0
-
     def dump_registers(self):
 
-        for i in range(Register["REGISTERS_COUNT"]):
-            print("{0} = {1:#08x}\n".format(registers_name[i], self.registers[registers_name[i]]))
+        for i in range(len(self.registers)):
+            reg_name = registers_name[i]
+            print("{0} = {1:#08x}\n".format(reg_name, self.registers[reg_name]))
 
         print("EIP = {0:#08x}\n".format(self.eip))
 
     def get_code8(self, index):
-        return self.memory[self.eip + index]
+        code = self.memory[self.eip + index]
+        if not type(code) == int:
+            code = int.from_bytes(code, 'little')
+        return code
 
     def get_sign_code8(self, index):
-        return self.memory[self.eip + index]
+        code = self.memory[self.eip + index]
+        code = int.from_bytes(code, 'little')
+        return code & 0xff
 
     def get_code32(self, index):
         ret = 0
@@ -65,15 +77,20 @@ class Emulator():
     def mov_r32_imm32(self):
         reg = self.get_code8(0) - 0xB8
         value = self.get_code32(1)
-        self.registers[registers_name[reg]] = value
+        reg_name = registers_name[reg]
+        self.registers[reg_name] = value
         self.eip += 5
+        if self.eip >= 0x100000000:
+            self.eip ^= 0x100000000
 
     def short_jump(self):
         diff = self.get_sign_code8(1)
-        self.eip += (diff + 2);
+        if diff & 0x80:
+            diff -= 0x100
+        self.eip += (diff + 2)
 
     def init_instructions(self):
-        self.instructions = {}
+        self.instructions = [None for _ in range(256)]
         for i in range(8):
             self.instructions[0xB8 + i] = self.mov_r32_imm32
         self.instructions[0xEB] = self.short_jump
@@ -87,8 +104,15 @@ def main(argc, argv):
     emu = Emulator()
     emu.create_emu(MEMORY_SIZE, 0x0000, 0x7c00)
 
+    offset = 0x00
+
     with open(argv[1], "rb") as binary:
-        emu.memory = binary.read(0x200)
+        while True:
+            b = binary.read(1)
+            if b == b'':
+                break
+            emu.memory[offset] = b
+            offset += 1
 
     emu.init_instructions()
 
@@ -97,7 +121,7 @@ def main(argc, argv):
 
         print("EIP = {0:#X}, Code = {1:#02X}\n".format(emu.eip, code))
 
-        if code not in emu.instructions:
+        if emu.instructions[code] == None:
             print("\n\nNot Implemented: {0:#x}\n".format(code))
             break
 
