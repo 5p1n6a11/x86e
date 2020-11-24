@@ -44,25 +44,25 @@ class Emulator():
             "EDI": 0x00,
         }
 
-        self.eip = eip
+        self.eip = eip & 0xffffffff
         self.registers["ESP"] = esp
 
     def dump_registers(self):
 
         for i in range(len(self.registers)):
             reg_name = registers_name[i]
-            print("{0} = {1:#08x}\n".format(reg_name, self.registers[reg_name]))
+            print("{0} = {1:#08x}".format(reg_name, self.registers[reg_name]))
 
-        print("EIP = {0:#08x}\n".format(self.eip))
+        print("EIP = {0:#08x}".format(self.eip))
 
     def get_code8(self, index):
-        code = self.memory[self.eip + index]
+        code = self.memory[(self.eip + index) & 0xffffffff]
         if not type(code) == int:
             code = int.from_bytes(code, 'little')
         return code
 
     def get_sign_code8(self, index):
-        code = self.memory[self.eip + index]
+        code = self.memory[(self.eip + index) & 0xffffffff]
         code = int.from_bytes(code, 'little')
         return code & 0xff
 
@@ -73,6 +73,9 @@ class Emulator():
             ret |= self.get_code8(index + i) << (i * 8)
 
         return ret
+
+    def get_sign_code32(self, index):
+        return self.get_code32(index)
 
     def mov_r32_imm32(self):
         reg = self.get_code8(0) - 0xB8
@@ -88,11 +91,18 @@ class Emulator():
         if diff & 0x80:
             diff -= 0x100
         self.eip += (diff + 2)
+        self.eip &= 0xffffffff
+
+    def near_jump(self):
+        diff = self.get_sign_code32(1)
+        self.eip += (diff + 5)
+        self.eip &= 0xffffffff
 
     def init_instructions(self):
         self.instructions = [None for _ in range(256)]
         for i in range(8):
             self.instructions[0xB8 + i] = self.mov_r32_imm32
+        self.instructions[0xE9] = self.near_jump
         self.instructions[0xEB] = self.short_jump
 
 def main(argc, argv):
@@ -102,9 +112,9 @@ def main(argc, argv):
         return
 
     emu = Emulator()
-    emu.create_emu(MEMORY_SIZE, 0x0000, 0x7c00)
+    emu.create_emu(MEMORY_SIZE, 0x7c00, 0x7c00)
 
-    offset = 0x00
+    offset = 0x7c00
 
     with open(argv[1], "rb") as binary:
         while True:
@@ -119,7 +129,7 @@ def main(argc, argv):
     while emu.eip < MEMORY_SIZE:
         code = emu.get_code8(0)
 
-        print("EIP = {0:#X}, Code = {1:#02X}\n".format(emu.eip, code))
+        print("EIP = {0:#X}, Code = {1:#02X}".format(emu.eip, code))
 
         if emu.instructions[code] == None:
             print("\n\nNot Implemented: {0:#x}\n".format(code))
