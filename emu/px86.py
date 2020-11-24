@@ -129,7 +129,7 @@ def main(argc, argv):
     while emu.eip < MEMORY_SIZE:
         code = emu.get_code8(0)
 
-        print("EIP = {0:#X}, Code = {1:#02X}".format(emu.eip, code))
+        print("EIP = {0:X}, Code = {1:02X}".format(emu.eip, code))
 
         if emu.instructions[code] == None:
             print("\n\nNot Implemented: {0:#x}\n".format(code))
