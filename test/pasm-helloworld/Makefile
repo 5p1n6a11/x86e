@@ -8,7 +8,7 @@ CFLAGS += -nostdlib -fno-asyncronous-unwind-tables \
 	-I$(Z_TOOLS)/i386-elf-gcc/include -g -fno-stack-protector
 LDFLAGS += --entry=func --oformat=binary
 
-.PHONY: all
+.PHONY: all clean
 all :
 	make $(TARGET)
 
@@ -21,3 +21,5 @@ all :
 %.bin : %.asm Makefile
 	$(AS) -f bin -o $@ $<
 
+clean:
+	rm -f $(TARGET)

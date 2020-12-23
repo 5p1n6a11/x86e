@@ -1,6 +1,9 @@
-import emulator
-import emulator_function
-import instruction
+#!/usr/bin/env python3
+#-*- coding:utf-8 -*-
+
+from emulator import *
+from emulator_function import *
+from instruction import *
 import sys
 
 MEMORY_SIZE = 1024 * 1024
@@ -81,3 +84,5 @@ def main(argc, argv):
     destroy_emu(emu)
     return
 
+if __name__ == '__main__':
+    main(len(sys.argv), sys.argv)
