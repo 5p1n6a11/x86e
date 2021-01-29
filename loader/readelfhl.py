@@ -343,9 +343,20 @@ class readelf_l:
         print("                 {0:#018x} {1:#018x}  {2}    {3:#x}".format(p_filesz, p_memsz, p_flags_str, p_align))
 
     def get_p_type(p_type):
-        if P_TYPE[p_type] == "PT_PHDR":
-            return "PHDR"
-        else:
+        try:
+            if P_TYPE[p_type] == "PT_LOAD":
+                return "LOAD"
+            elif P_TYPE[p_type] == "PT_DYNAMIC":
+                return "DYNAMIC"
+            elif P_TYPE[p_type] == "PT_INTERP":
+                return "INTERP"
+            elif P_TYPE[p_type] == "PT_NOTE":
+                return "NOTE"
+            elif P_TYPE[p_type] == "PT_PHDR":
+                return "PHDR"
+            else:
+                return "None"
+        except:
             return "None"
 
     def print_p_offset(p_offset):
@@ -360,8 +371,12 @@ if __name__ == '__main__':
         elf_phdr_offset = elf64_hdr[20]
         f.seek(elf_phdr_offset, 0)
         elf64_phdr_table = f.read(elf64_hdr[24] * elf64_hdr[25])
+        e_phentsize = elf64_hdr[24]
+        e_phnum = elf64_hdr[25]
 
-    elf64_phdr = struct.unpack_from("IIQQQQQQ", elf, elf_phdr_offset)
-    readelf_l.print_readelf_l(elf64_hdr[16], elf64_hdr[19], elf64_hdr[24], 
-        elf64_hdr[25], elf64_hdr[20], elf64_phdr, elf64_phdr_table)
+    for _ in range(e_phnum):
+        elf64_phdr = struct.unpack_from("IIQQQQQQ", elf, elf_phdr_offset)
+        readelf_l.print_readelf_l(elf64_hdr[16], elf64_hdr[19], elf64_hdr[24], 
+            elf64_hdr[25], elf64_hdr[20], elf64_phdr, elf64_phdr_table)
+        elf_phdr_offset += e_phentsize
 
