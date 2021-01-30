@@ -294,14 +294,7 @@ P_FLAGS = {
 if __name__ == '__main__':
     filename = sys.argv[1]
 
-    elf_hdr_offset = 0
-
     with open(filename, 'rb') as f:
         elf = f.read()
-        elf64_hdr = struct.unpack_from("16BHHIQQQIHHHHHH", elf, elf_hdr_offset)
-        elf_hdr = f.read(elf64_hdr[23]+1)
-        elf_phdr_offset = elf64_hdr[20]
-        f.seek(elf_phdr_offset, 0)
-        elf64_phdr_table = f.read(elf64_hdr[24] * elf64_hdr[25])
 
     readelf_h.print_readelf_h(elf)
