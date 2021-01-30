@@ -236,9 +236,9 @@ class readelf_h:
         print("\t", end="")
         print(e_shstrndx)
 
-    def print_readelf_h(elf_hdr):
+    def print_readelf_h(elf):
         elf_hdr_offset = 0
-        elf64_hdr = struct.unpack_from("16BHHIQQQIHHHHHH", elf_hdr, elf_hdr_offset)
+        elf64_hdr = struct.unpack_from("16BHHIQQQIHHHHHH", elf, elf_hdr_offset)
         print("ELF Header:")
         e_ident = elf64_hdr[0:16]
         readelf_h.print_magic(e_ident)
@@ -275,14 +275,18 @@ class readelf_h:
         readelf_h.print_e_shstrndx(e_shstrndx)
 
 P_TYPE = {
-    0: "PT_NULL",
-    1: "PT_LOAD",
-    2: "PT_DYNAMIC",
-    3: "PT_INTERP",
-    4: "PT_NOTE",
-    5: "PT_SHLIB",
-    6: "PT_PHDR",
-    7: "PT_TLS",
+    0x0: "PT_NULL",
+    0x1: "PT_LOAD",
+    0x2: "PT_DYNAMIC",
+    0x3: "PT_INTERP",
+    0x4: "PT_NOTE",
+    0x5: "PT_SHLIB",
+    0x6: "PT_PHDR",
+    0x7: "PT_TLS",
+    0x6474e550: "PT_GNU_EH_FRAME",
+    0x6474e551: "PT_GNU_STACK",
+    0x6474e552: "PT_GNU_RELRO",
+    0x6474e553: "PT_GNU_PROPERTY",
 }
 
 P_FLAGS = {
@@ -291,10 +295,111 @@ P_FLAGS = {
     0x1: "PF_X",
 }
 
+class readelf_l:
+    def print_readelf_l(elf):
+        elf_hdr_offset = 0
+        elf64_hdr = struct.unpack_from("16BHHIQQQIHHHHHH", elf, elf_hdr_offset)
+        
+        print("")
+
+        e_type = elf64_hdr[16]
+        print("Elf file type is ", end="")
+        if E_TYPE[e_type] == "ET_DYN":
+            s = "DYN (shared object file)"
+        else:
+            s = "None"
+        print(s)
+
+        e_entry = elf64_hdr[19]
+        print("Entry point ", end="")
+        print(hex(e_entry))
+
+        e_phnum = elf64_hdr[25]
+        print("There are ", end="")
+        print(e_phnum, end="")
+        e_phoff = elf64_hdr[20]
+        print(" program headers, starting at offser ", end="")
+        print(e_phoff)
+
+        print("")
+
+        e_phoff = elf64_hdr[20]
+        e_phentsize = elf64_hdr[24]
+        e_phnum = elf64_hdr[25]
+        readelf_l.print_program_headers(elf, e_phoff, e_phentsize, e_phnum)
+
+        print("")
+
+    def print_program_headers(elf, e_phoff, e_phentsize, e_phnum):
+        print("Program Headers:")
+        print("  Type           Offset             VirtAddr           PhysAddr")
+        print("                 FileSiz            MemSiz              Flags  Align")
+        elf_phdr_offset = e_phoff
+        for _ in range(e_phnum):
+            elf64_phdr = struct.unpack_from("IIQQQQQQ", elf, elf_phdr_offset)
+            readelf_l.print_program_header(elf64_phdr, elf)
+            elf_phdr_offset += e_phentsize
+
+    def print_program_header(elf64_phdr, elf):
+        p_type = readelf_l.get_p_type(elf64_phdr[0])
+        p_offset = elf64_phdr[2]
+        p_vaddr = elf64_phdr[3]
+        p_paddr = elf64_phdr[4]
+        p_filesz = elf64_phdr[5]
+        p_memsz = elf64_phdr[6]
+        p_flags = elf64_phdr[1]
+        p_flags_str = ""
+        if ((p_flags & 0x4) >> 2) == 1:
+            p_flags_str += "R"
+        else:
+            p_flags_str += " "
+        if ((p_flags & 0x2) >> 1) == 1:
+            p_flags_str += "W"
+        else:
+            p_flags_str += " "
+        if ((p_flags & 0x1) >> 0) == 1:
+            p_flags_str += "E"
+        else:
+            p_flags_str += " "
+        p_align = elf64_phdr[7]
+        print("  {0:<15.15}{1:#018x} {2:#018x} {3:#018x}".format(p_type, p_offset, p_vaddr, p_paddr))
+        print("                 {0:#018x} {1:#018x}  {2}    {3:#x}".format(p_filesz, p_memsz, p_flags_str, p_align))
+        if p_type == "INTERP":
+            fmt = str(p_filesz) + "s"
+            program_interpreter = struct.unpack_from(fmt, elf, p_offset)
+            program_interpreter = program_interpreter[0].decode()
+            print("      [Requesting program interpreter: {}]".format(program_interpreter))
+
+    def get_p_type(p_type):
+        try:
+            if P_TYPE[p_type] == "PT_LOAD":
+                return "LOAD"
+            elif P_TYPE[p_type] == "PT_DYNAMIC":
+                return "DYNAMIC"
+            elif P_TYPE[p_type] == "PT_INTERP":
+                return "INTERP"
+            elif P_TYPE[p_type] == "PT_NOTE":
+                return "NOTE"
+            elif P_TYPE[p_type] == "PT_PHDR":
+                return "PHDR"
+            elif P_TYPE[p_type] == "PT_GNU_EH_FRAME":
+                return "GNU_EH_FRAME"
+            elif P_TYPE[p_type] == "PT_GNU_STACK":
+                return "GNU_STACK"
+            elif P_TYPE[p_type] == "PT_GNU_RELRO":
+                return "GNU_RELRO"
+            elif P_TYPE[p_type] == "PT_GNU_PROPERTY":
+                return "GNU_PROPERTY"
+            else:
+                return "None"
+        except:
+            print(hex(p_type))
+            return "None"
+
 if __name__ == '__main__':
     filename = sys.argv[1]
 
     with open(filename, 'rb') as f:
         elf = f.read()
 
-    readelf_h.print_readelf_h(elf)
+    readelf_l.print_readelf_l(elf)
