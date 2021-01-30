@@ -330,6 +330,11 @@ class readelf_l:
 
         print("")
 
+        print(" Section to Segment mapping:")
+        print("  Segment Sections...")
+        for i in range(e_phnum):
+            print("   {0:02d}".format(i))
+
     def print_program_headers(elf, e_phoff, e_phentsize, e_phnum):
         print("Program Headers:")
         print("  Type           Offset             VirtAddr           PhysAddr")
