@@ -221,7 +221,7 @@ class readelf_h:
         print(e_phnum)
 
     def print_e_shentsize(e_shentsize):
-        print("  Sizo of section headers:", end="")
+        print("  Size of section headers:", end="")
         print("\t\t", end="")
         print(e_shentsize, end="")
         print(" (bytes)")
@@ -305,7 +305,7 @@ class readelf_l:
         e_type = elf64_hdr[16]
         print("Elf file type is ", end="")
         if E_TYPE[e_type] == "ET_DYN":
-            s = "DYN (shared object file)"
+            s = "DYN (Shared object file)"
         else:
             s = "None"
         print(s)
@@ -407,4 +407,4 @@ if __name__ == '__main__':
     with open(filename, 'rb') as f:
         elf = f.read()
 
-    readelf_l.print_readelf_l(elf)
+    readelf_h.print_readelf_h(elf)
