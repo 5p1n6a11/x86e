@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 
-import emulator
-import emulator_function
-import modrm
+from emulator import *
+from emulator_function import *
+from modrm import *
 import sys
-
-instructions = None
 
 def mov_r32_imm32(emu):
     reg = get_code8(emu, 0) - 0xB8
@@ -97,16 +95,16 @@ def near_jump(emu):
     emu.eip += (diff + 5)
     emu.eip &= 0xffffffff
 
-def init_instructions():
-    instructions = [None for _ in range(256)]
-    instructions[0x01] = add_rm32_r32
-    instructions[0x83] = code_83
-    instructions[0x89] = mov_rm32_r32
-    instructions[0x8B] = mov_r32_rm32
+def init_instructions(emu):
+    emu.instructions = [None for _ in range(256)]
+    emu.instructions[0x01] = add_rm32_r32
+    emu.instructions[0x83] = code_83
+    emu.instructions[0x89] = mov_rm32_r32
+    emu.instructions[0x8B] = mov_r32_rm32
     for i in range(8):
-        instructions[0xB8 + i] = mov_r32_imm32
-    instructions[0xC7] = mov_rm32_imm32
-    instructions[0xE9] = near_jump
-    instructions[0xEB] = short_jump
-    instructions[0xFF] = code_ff
+        emu.instructions[0xB8 + i] = mov_r32_imm32
+    emu.instructions[0xC7] = mov_rm32_imm32
+    emu.instructions[0xE9] = near_jump
+    emu.instructions[0xEB] = short_jump
+    emu.instructions[0xFF] = code_ff
 

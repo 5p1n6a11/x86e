@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 
-import emulator
+from emulator import *
 
 def get_code8(emu, index):
     code = emu.memory[(emu.eip + index) & 0xffffffff]
@@ -21,14 +21,14 @@ def get_code32(emu, index):
     return ret
 
 def get_sign_code32(emu, index):
-    return get_code32(index)
+    return get_code32(emu, index)
 
 def get_register32(emu, index):
-    reg_name = registers_name[index]
+    reg_name = emu.registers_name[index]
     return emu.registers[reg_name]
 
 def set_register32(emu, index, value):
-    reg_name = registers_name[index]
+    reg_name = emu.registers_name[index]
     emu.registers[reg_name] = value
 
 def set_memory8(emu, address, value):
