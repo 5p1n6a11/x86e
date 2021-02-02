@@ -66,7 +66,7 @@ def push_imm8(emu):
     emu.eip += 2
     emu.eip &= 0xffffffff
 
-def add_rm32_imm8(emu, modrm)
+def add_rm32_imm8(emu, modrm):
     r32 = get_rm32(emu, modrm)
     r32 &= 0xffffffff
     imm8 = get_sign_code8(emu, 0)
@@ -89,7 +89,7 @@ def code_83(emu):
     parse_modrm(emu, modrm)
 
     if modrm.opecode == 0:
-        add_rm32_imm8(emu, &modrm)
+        add_rm32_imm8(emu, modrm)
     elif modrm.opecode == 5:
         sub_rm32_imm8(emu, modrm)
     else:
@@ -122,7 +122,7 @@ def code_ff(emu):
         print("not implemented: FF /{0:d}".format(modrm.opecode))
         sys.exit(1)
 
-def call_rel32(emu)
+def call_rel32(emu):
     diff = get_sign_code32(emu, 1)
     diff &= 0xffffffff
     push32(emu, emu.eip + 5)
