@@ -46,3 +46,21 @@ def get_memory32(emu, address):
     for i in range(4):
         ret |= get_memory8(emu, address + i) << (8 * i)
     return ret
+
+def push32(emu, value):
+    reg_esp_idx = Register["ESP"]
+    address = get_register32(emu, reg_esp_idx) - 4
+    address = address & 0xffffffff
+    ret = set_register32(emu, reg_esp_idx, address)
+    set_memory32(emu, address, value)
+
+def pop32(emu):
+    reg_esp_idx = Register["ESP"]
+    address = get_register32(emu, reg_esp_idx)
+    address = address & 0xffffffff
+    ret = get_memory32(emu, address)
+    ret = ret & 0xffffffff
+    set_register32(emu, reg_esp_idx, (address + 4) & 0xffffffff)
+
+    return ret
+

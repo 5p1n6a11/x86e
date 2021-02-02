@@ -67,6 +67,7 @@ def calc_memory_address(emu, modrm):
         exit(0)
 
 def set_rm32(emu, modrm, value):
+    value &= 0xffffffff
     if modrm.mod == 3:
         set_register32(emu, modrm.rm, value)
     else:
@@ -81,6 +82,7 @@ def get_rm32(emu, modrm):
         return get_memory32(emu, address)
 
 def set_r32(emu, modrm, value):
+    value &= 0xffffffff
     set_register32(emu, modrm.reg_index, value)
 
 def get_r32(emu, modrm):
