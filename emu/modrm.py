@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 
-import emulator
-import emulator_function
+from emulator import *
+from emulator_function import *
 import ctypes
 
 class ModRM():
@@ -13,7 +13,7 @@ class ModRM():
         self.rm = None
         self.sib = None
         self.disp8 = None
-        self.disp32 = ctypes.c_uint(self.disp8)
+        self.disp32 = None
 
 def parse_modrm(emu, modrm):
     assert emu != None and modrm != None
@@ -30,7 +30,7 @@ def parse_modrm(emu, modrm):
         modrm.sib = get_code8(emu, 0)
         emu.eip += 1
 
-    if (mod.mod == 0 and mod.rm == 5) or modrm.mod == 2:
+    if (modrm.mod == 0 and modrm.rm == 5) or modrm.mod == 2:
         modrm.disp32 = get_sign_code32(emu, 0)
         modrm.disp8 = ctypes.c_int(modrm.disp32)
         emu.eip += 4
