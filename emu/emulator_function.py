@@ -4,24 +4,32 @@
 from emulator import *
 
 def get_code8(emu, index):
+    index &= 0xffffffff
     code = emu.memory[(emu.eip + index) & 0xffffffff]
-    if not type(code) == int:
-        code = int.from_bytes(code, 'little')
+    code = int.from_bytes(code, 'little')
     return code
 
 def get_sign_code8(emu, index):
+    index &= 0xffffffff
     code = emu.memory[(emu.eip + index) & 0xffffffff]
     code = int.from_bytes(code, 'little')
     return code & 0xff
 
 def get_code32(emu, index):
+    index &= 0xffffffff
     ret = 0
+
     for i in range(4):
         ret |= get_code8(emu, index + i) << (i * 8)
-    return ret
+        ret &= 0xffffffff
+
+    ret &= 0xffffffff
+
+    return ret 
 
 def get_sign_code32(emu, index):
-    return get_code32(emu, index)
+    index &= 0xffffffff
+    return get_code32(emu, index) & 0xffffffff
 
 def get_register32(emu, index):
     reg_name = emu.registers_name[index]
