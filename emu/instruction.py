@@ -8,7 +8,9 @@ import sys
 
 def mov_r32_imm32(emu):
     reg = get_code8(emu, 0) - 0xB8
+    reg &= 0xff
     value = get_code32(emu, 1)
+    value &= 0xffffffff
     set_register32(emu, reg, value)
     emu.eip += 5
     emu.eip &= 0xffffffff
