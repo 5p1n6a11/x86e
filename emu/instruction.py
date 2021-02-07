@@ -4,7 +4,6 @@
 from emulator import *
 from emulator_function import *
 from modrm import *
-import sys
 
 def mov_r32_imm32(emu):
     reg = get_code8(emu, 0) - 0xB8
@@ -21,6 +20,7 @@ def mov_r32_rm32(emu):
     modrm = ModRM()
     parse_modrm(emu, modrm)
     rm32 = get_rm32(emu, modrm)
+    rm32 &= 0xffffffff
     set_r32(emu, modrm, rm32)
 
 def add_rm32_r32(emu):
@@ -29,7 +29,9 @@ def add_rm32_r32(emu):
     modrm = ModRM()
     parse_modrm(emu, modrm)
     r32 = get_r32(emu, modrm)
+    r32 &= 0xffffffff
     rm32 = get_rm32(emu, modrm)
+    rm32 &= 0xffffffff
     set_rm32(emu, modrm, rm32 + r32)
 
 def mov_rm32_r32(emu):
@@ -38,6 +40,7 @@ def mov_rm32_r32(emu):
     modrm = ModRM()
     parse_modrm(emu, modrm)
     r32 = get_r32(emu, modrm)
+    r32 &= 0xffffffff
     set_rm32(emu, modrm, r32)
 
 def push_r32(emu):
@@ -69,8 +72,8 @@ def push_imm8(emu):
     emu.eip &= 0xffffffff
 
 def add_rm32_imm8(emu, modrm):
-    r32 = get_rm32(emu, modrm)
-    r32 &= 0xffffffff
+    rm32 = get_rm32(emu, modrm)
+    rm32 &= 0xffffffff
     imm8 = get_sign_code8(emu, 0)
     imm8 &= 0xffffffff
     emu.eip += 1
@@ -79,7 +82,9 @@ def add_rm32_imm8(emu, modrm):
 
 def sub_rm32_imm8(emu, modrm):
     rm32 = get_rm32(emu, modrm)
+    rm32 &= 0xffffffff
     imm8 = get_sign_code8(emu, 0)
+    imm8 &= 0xffffffff
     emu.eip += 1
     emu.eip &= 0xffffffff
     set_rm32(emu, modrm, rm32 - imm8)
@@ -96,7 +101,7 @@ def code_83(emu):
         sub_rm32_imm8(emu, modrm)
     else:
         print("not implemented: 83 /{0:d}".format(modrm.opecode))
-        sys.exit(1)
+        exit(1)
 
 def mov_rm32_imm32(emu):
     emu.eip += 1
@@ -104,12 +109,14 @@ def mov_rm32_imm32(emu):
     modrm = ModRM()
     parse_modrm(emu, modrm)
     value = get_code32(emu, 0)
+    value &= 0xffffffff
     emu.eip += 4
     emu.eip &= 0xffffffff
     set_rm32(emu, modrm, value)
 
 def inc_rm32(emu, modrm):
     value = get_rm32(emu, modrm)
+    value &= 0xffffffff
     set_rm32(emu, modrm, value + 1)
 
 def code_ff(emu):
@@ -122,16 +129,18 @@ def code_ff(emu):
         inc_rm32(emu, modrm)
     else:
         print("not implemented: FF /{0:d}".format(modrm.opecode))
-        sys.exit(1)
+        exit(1)
 
 def call_rel32(emu):
     diff = get_sign_code32(emu, 1)
     diff &= 0xffffffff
     push32(emu, emu.eip + 5)
     emu.eip += (diff + 5)
+    emu.eip &= 0xffffffff
 
 def ret(emu):
     emu.eip = pop32(emu)
+    emu.eip &= 0xffffffff
 
 def leave(emu):
     reg_ebp_idx = Register["EBP"]
@@ -144,8 +153,9 @@ def leave(emu):
     emu.eip += 1
     emu.eip &= 0xffffffff
 
-def short_jump(emu):
+def short_jump(emu): # ???
     diff = get_sign_code8(emu, 1)
+    diff &= 0xff
     if diff & 0x80:
         diff -= 0x100
     emu.eip += (diff + 2)
@@ -153,6 +163,7 @@ def short_jump(emu):
 
 def near_jump(emu):
     diff = get_sign_code32(emu, 1)
+    diff &= 0xffffffff
     emu.eip += (diff + 5)
     emu.eip &= 0xffffffff
 
