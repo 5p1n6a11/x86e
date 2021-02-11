@@ -31,6 +31,8 @@ def dump_registers(emu):
     print("EIP = {0:#08x}".format(emu.eip))
 
 def create_emu(size, eip, esp):
+    eip &= 0xffffffff
+    esp &= 0xffffffff
     emu = Emulator()
 
     emu.registers_name = ["EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"]
@@ -60,7 +62,7 @@ def main(argc, argv):
 
     if argc != 2:
         print("usage: px86 filename")
-        return
+        return 1
 
     emu = create_emu(MEMORY_SIZE, 0x7c00, 0x7c00)
 
@@ -70,6 +72,7 @@ def main(argc, argv):
 
     while emu.eip < MEMORY_SIZE:
         code = get_code8(emu, 0)
+        code &= 0xff
         print("EIP = {0:X}, Code = {1:02X}".format(emu.eip, code))
 
         if emu.instructions[code] == None:
@@ -84,7 +87,7 @@ def main(argc, argv):
 
     dump_registers(emu)
     destroy_emu(emu)
-    return
+    return 0
 
 if __name__ == '__main__':
     main(len(sys.argv), sys.argv)
