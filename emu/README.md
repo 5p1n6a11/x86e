@@ -1,3 +1,3 @@
 # emu
 
-x86
+x86 emulator
